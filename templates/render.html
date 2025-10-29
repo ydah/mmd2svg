@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+
+    const config = {
+      startOnLoad: false,
+      theme: '%<theme>s',
+      securityLevel: '%<security_level>s',
+      logLevel: '%<log_level>s'
+    };
+
+    mermaid.initialize(config);
+
+    window.renderMermaid = async function (code) {
+      try {
+        const { svg } = await mermaid.render('mermaid-diagram', code);
+        return svg;
+      } catch (error) {
+        throw new Error('Mermaid rendering failed: ' + error.message);
+      }
+    };
+
+    window.mermaidReady = true;
+  </script>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background-color: %<background_color>s;
+    }
+    #container {
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+  <div id="container"></div>
+</body>
+</html>

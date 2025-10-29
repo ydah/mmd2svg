@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative '../lib/mmd2svg'
+require_relative '../lib/mmd2svg/cli'
+
+Mmd2svg::CLI.start(ARGV)

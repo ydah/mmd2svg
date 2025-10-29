@@ -1,28 +1,255 @@
-# Mmd2svg
+# mermaid2svg
 
-TODO: Delete this and the text below, and describe your gem
-
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/mmd2svg`. To experiment with that code, run `bin/console` for an interactive prompt.
+Convert Mermaid diagrams to SVG files using Puppeteer. Supports both CLI and programmatic usage with batch conversion capabilities.
 
 ## Installation
 
-TODO: Replace `UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG` with your gem name right after releasing it to RubyGems.org. Please do not do it earlier due to security reasons. Alternatively, replace this section with instructions to install your gem from git if you don't plan to release to RubyGems.org.
+Add this line to your application's Gemfile:
 
-Install the gem and add to the application's Gemfile by executing:
-
-```bash
-bundle add UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
+```ruby
+gem 'mermaid2svg'
 ```
 
-If bundler is not being used to manage dependencies, install the gem by executing:
+And then execute:
 
 ```bash
-gem install UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
+bundle install
+```
+
+Or install it yourself as:
+
+```bash
+gem install mermaid2svg
 ```
 
 ## Usage
 
-TODO: Write usage instructions here
+### Command Line Interface
+
+#### Basic Usage
+
+```bash
+# Convert a single file
+mermaid2svg diagram.mmd -o output.svg
+
+# Convert with options
+mermaid2svg diagram.mmd -o output.svg --theme dark --background transparent
+
+# Batch conversion from directory
+mermaid2svg diagrams/ -o output/
+
+# Batch conversion with glob pattern
+mermaid2svg diagrams/*.mmd -o output/
+
+# Recursive directory conversion
+mermaid2svg diagrams/ -o output/ --recursive
+```
+
+#### CLI Options
+
+```
+Options:
+  -o, --output PATH          Output file or directory path (required)
+  -t, --theme THEME          Theme: default, dark, forest, neutral (default: default)
+  -b, --background COLOR     Background color: transparent, white, or #hexcode (default: white)
+  -w, --width WIDTH          Output width in pixels
+  -h, --height HEIGHT        Output height in pixels
+  -c, --config FILE          Config file path (default: .mermaid2svg.yml)
+  -r, --recursive            Process directories recursively
+  --timeout MILLISECONDS     Puppeteer timeout in ms (default: 30000)
+  --skip-errors              Continue processing even if errors occur
+  --version                  Show version
+  --help                     Show help message
+```
+
+### Ruby API
+
+#### Single File Conversion
+
+```ruby
+require 'mermaid2svg'
+
+# Render from code string
+mermaid_code = <<~MERMAID
+  graph TD
+    A[Start] --> B[Process]
+    B --> C[End]
+MERMAID
+
+Mermaid2svg.render(mermaid_code, output: 'diagram.svg')
+
+# Render from file
+Mermaid2svg.render('diagram.mmd', output: 'output.svg')
+
+# Get SVG as string
+svg_string = Mermaid2svg.render_to_string(mermaid_code)
+```
+
+#### Batch Conversion
+
+```ruby
+# Convert all .mmd files in a directory
+results = Mermaid2svg.render_batch('diagrams/', output_dir: 'output/')
+
+# With glob pattern
+results = Mermaid2svg.render_batch('diagrams/*.mmd', output_dir: 'output/')
+
+# Recursive conversion
+results = Mermaid2svg.render_batch(
+  'diagrams/',
+  output_dir: 'output/',
+  recursive: true
+)
+
+# Check results
+puts "Succeeded: #{results[:succeeded].count}"
+puts "Failed: #{results[:failed].count}"
+```
+
+#### With Options
+
+```ruby
+Mermaid2svg.render(
+  mermaid_code,
+  output: 'diagram.svg',
+  theme: 'dark',
+  background_color: 'transparent',
+  width: 800,
+  height: 600
+)
+```
+
+#### Global Configuration
+
+```ruby
+Mermaid2svg.configure do |config|
+  config.theme = 'dark'
+  config.background_color = 'transparent'
+  config.puppeteer_timeout = 60000
+end
+
+# Now all renders use these settings
+Mermaid2svg.render(code, output: 'diagram.svg')
+```
+
+### Configuration File
+
+Create a `.mermaid2svg.yml` file in your project root:
+
+```yaml
+# Theme setting
+theme: default  # default, dark, forest, neutral
+
+# Background color
+background_color: white  # transparent, white, or #hexcode
+
+# Output size (optional)
+# width: 800
+# height: 600
+
+# Puppeteer settings
+puppeteer:
+  headless: true
+  timeout: 30000
+  args:
+    - '--no-sandbox'
+    - '--disable-setuid-sandbox'
+
+# Mermaid.js settings
+mermaid:
+  securityLevel: 'loose'
+  startOnLoad: true
+  theme: default
+  logLevel: 'error'
+
+# Batch conversion settings
+batch:
+  recursive: false
+  overwrite: true
+  skip_errors: false
+```
+
+## Supported Mermaid Diagram Types
+
+This gem supports all diagram types that Mermaid.js supports:
+
+- Flowchart
+- Sequence Diagram
+- Class Diagram
+- State Diagram
+- Entity Relationship Diagram
+- User Journey
+- Gantt Chart
+- Pie Chart
+- Git Graph
+- And more...
+
+## Error Handling
+
+The gem provides custom exceptions for different error scenarios:
+
+```ruby
+begin
+  Mermaid2svg.render('invalid.mmd', output: 'out.svg')
+rescue Mermaid2svg::RenderError => e
+  puts "Render failed: #{e.message}"
+rescue Mermaid2svg::FileNotFoundError => e
+  puts "File not found: #{e.message}"
+rescue Mermaid2svg::PuppeteerError => e
+  puts "Puppeteer error: #{e.message}"
+rescue Mermaid2svg::ConfigError => e
+  puts "Configuration error: #{e.message}"
+end
+```
+
+## Examples
+
+### Example 1: Simple Flowchart
+
+```ruby
+code = <<~MERMAID
+  graph LR
+    A[Square Rect] --> B((Circle))
+    A --> C(Round Rect)
+    B --> D{Rhombus}
+    C --> D
+MERMAID
+
+Mermaid2svg.render(code, output: 'flowchart.svg')
+```
+
+### Example 2: Sequence Diagram with Dark Theme
+
+```ruby
+code = <<~MERMAID
+  sequenceDiagram
+    Alice->>John: Hello John, how are you?
+    John-->>Alice: Great!
+    Alice-)John: See you later!
+MERMAID
+
+Mermaid2svg.render(
+  code,
+  output: 'sequence.svg',
+  theme: 'dark',
+  background_color: 'transparent'
+)
+```
+
+### Example 3: Batch Convert Project Diagrams
+
+```ruby
+results = Mermaid2svg.render_batch(
+  'docs/diagrams/',
+  output_dir: 'public/images/',
+  recursive: true,
+  theme: 'forest'
+)
+
+results[:failed].each do |failure|
+  puts "Failed: #{failure[:file]} - #{failure[:error]}"
+end
+```
 
 ## Development
 
